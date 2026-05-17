@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bahir Dar Intelligent Route Finder</title>
+    <!-- Use Google Fonts for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-dark: #1e40af;
+            --secondary: #3b82f6;
+            --accent: #e8710a;
+            --accent-dark: #c25e08;
+            --background: #f0fdfa;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --error-bg: #fef2f2;
+            --error-text: #dc2626;
+            --success-bg: #eff6ff;
+            --focus-ring: rgba(59, 130, 246, 0.2);
+            --nav-bg: #0f172a;
+        }
+
+        body {
+            /* font-family: 'Inter', system-ui, -apple-system, sans-serif; */
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--text-main);
+            box-sizing: border-box;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background-color: #1b8f3a;
+            color: white;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-content {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            height: 100%;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 22px 0;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link.active {
+            color: white;
+            border-bottom-color: var(--secondary);
+        }
+
+        /* Page Management */
+        .page-section {
+            display: none;
+            padding: 24px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* 2-Column Layout (Route Finder) */
+        .layout-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 24px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+
+        .left-column {
+            flex: 4;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .right-column {
+            flex: 6;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px -10px rgba(30, 58, 138, 0.15);
+            background: var(--surface);
+            min-height: 600px;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background-color: #e5e7eb;
+        }
+
+        @media (max-width: 900px) {
+            .layout-container {
+                flex-direction: column;
+            }
+
+            .left-column {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
+
+            .right-column {
+                flex: none;
+                width: 100%;
+                min-height: 500px;
+            }
+        }
+
+        /* Card and UI Styles */
+        .card {
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -10px rgba(30, 58, 138, 0.15);
+            padding: 32px;
+            box-sizing: border-box;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            background-color: var(--surface);
+            appearance: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 20px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(30, 58, 138, 0.2);
+        }
+
+        .btn-clear {
+            background: var(--accent);
+        }
+
+        .btn-clear:hover {
+            background: var(--accent-dark);
+            box-shadow: 0 6px 16px rgba(232, 113, 10, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--secondary);
+            font-weight: 500;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .error {
+            display: none;
+            background: var(--error-bg);
+            color: var(--error-text);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            text-align: center;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .flash-message {
+            display: none;
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #bbf7d0;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Results & Sync UI */
+        .results {
+            display: none;
+            margin-top: 24px;
+            border-top: 2px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .cost-box {
+            background: var(--success-bg);
+            padding: 16px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #bfdbfe;
+            margin-bottom: 20px;
+        }
+
+        .cost-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .cost-value {
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* Animation Controls */
+        .anim-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .anim-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #e2e8f0;
+            color: var(--primary);
+        }
+
+        .anim-btn:hover {
+            background: #cbd5e1;
+        }
+
+        .anim-btn.primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .anim-btn.primary:hover {
+            background: #059669;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--secondary);
+            width: 0%;
+            transition: width 0.3s linear;
+        }
+
+        /* Step List (Vertical) */
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .step-item.completed {
+            background: #ecfdf5;
+            border-color: #10b981;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #94a3b8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .step-item.active .step-icon {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .step-item.completed .step-icon {
+            background: #10b981;
+            color: white;
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .step-distance {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 2px 0 0 0;
+            font-weight: 500;
+        }
+
+        .map-label {
+            background-color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #9ca3af;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: -35px;
+            color: #1f2937;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+        }
+
+        
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    
+
+    <!-- Route Finder Page -->
+    <div id="routeFinderPage" class="page-section active">
+        <div class="layout-container">
+            <!-- Left Column: Form -->
+            <div class="left-column">
+                <div class="card">
+                    <div id="flashMsg" class="flash-message">Search cleared. Ready for new route!</div>
+f
+                    <div class="header">
+                        <h1 style="color: #059669;">Bahir Dar Intelligent Route Finder</h1>
+                        <p>Powered by A* Search Optimization</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start" id="startLabel" style="color: #059669;">Start Location</label>
+                        <select id="start">
+                            <option value="Bahir Dar University">Bahir Dar University</option>
+                            <option value="Stadium">Stadium</option>
+                            <option value="Main Market">Main Market</option>
+                            <option value="Lake Tana">Lake Tana</option>
+                            <option value="Blue Nile Hotel">Blue Nile Hotel</option>
+                            <option value="Tana Hotel">Tana Hotel</option>
+                            <option value="Ghion Hotel">Ghion Hotel</option>
+                            <option value="Airport">Airport</option>
+                            <option value="Felege Hiwot Hospital">Felege Hiwot Hospital</option>
+                            <option value="Abay Bridge">Abay Bridge</option>
+                            <option value="Commercial Bank">Commercial Bank</option>
+                            <option value="Telecom Office">Telecom Office</option>
+                            <option value="Poly Technic">Poly Technic</option>
+                            <option value="Bus Station">Bus Station</option>
+                            <option value="Main Roundabout">Main Roundabout</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goal" style="color: #059669;">Destination</label>
+                        <select id="goal">
+                            <option value="Airport" selected>Airport</option>
+                            <option value="Bahir Dar University">Bahir Dar University</option>
+                            <option value="Stadium">Stadium</option>
+                            <option value="Main Market">Main Market</option>
+                            <option value="Lake Tana">Lake Tana</option>
+                            <option value="Blue Nile Hotel">Blue Nile Hotel</option>
+                            <option value="Tana Hotel">Tana Hotel</option>
+                            <option value="Ghion Hotel">Ghion Hotel</option>
+                            <option value="Felege Hiwot Hospital">Felege Hiwot Hospital</option>
+                            <option value="Abay Bridge">Abay Bridge</option>
+                            <option value="Commercial Bank">Commercial Bank</option>
+                            <option value="Telecom Office">Telecom Office</option>
+                            <option value="Poly Technic">Poly Technic</option>
+                            <option value="Bus Station">Bus Station</option>
+                            <option value="Main Roundabout">Main Roundabout</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button id="findRouteBtn" class="btn" style="background-color: #059669;">Find Optimal Route</button>
+                        <button id="clearBtn" class="btn btn-clear">Clear & Restart</button>
+                    </div>
+
+                    <div class="loading" id="loadingState">
+                        <div class="spinner"></div>
+                        <span>Calculating best path...</span>
+                    </div>
+
+                    <div class="error" id="errorState"></div>
+
+                    <div class="results" id="resultsSection">
+                        <div class="cost-box">
+                            <span class="cost-label">Total Cost / Distance</span>
+                            <span class="cost-value" id="costValue">0</span>
+                        </div>
+
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress-text">
+                                <span id="progressText">Step 0 of 0</span>
+                                <span>Progress</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progressFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="anim-controls" id="animControls">
+                            <button class="anim-btn primary" id="playBtn">Animate Route</button>
+                            <button class="anim-btn" id="pauseBtn" style="display:none;">Pause</button>
+                            <button class="anim-btn primary" id="resumeBtn" style="display:none;">Resume</button>
+                            <button class="anim-btn primary" id="replayBtn" style="display:none;">Replay</button>
+                        </div>
+
+                        <div class="step-list" id="pathContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Map -->
+            <div class="right-column">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+    <div class="app-footer" style="
+    margin-top: 32px;
+    text-align: center;
+    padding: 18px 10px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    border-top: 1px solid #e2e8f0;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(6px);
+">
+    <div style="font-weight:700; color:#1e3a8a; margin-bottom:6px;">
+        © 2026 Bahir Dar Intelligent Route Finder. All rights reserved.
+    </div>
+
+    <div style="font-size:12px; margin-bottom:6px;">
+        Simple AI-powered route planning system for Bahir Dar city.
+    </div>
+
+    <span style="color:#059669; font-weight:600;">
+        Done by BEZAWIT DIRES
+    </span>
+</div>
+
+
+    <script>
+        // --- HARDCODED NODE COORDINATES ---
+        const NODE_COORDS = {
+            bahir_dar_university: { lat: 11.5933, lng: 37.3900 },
+            stadium: { lat: 11.5900, lng: 37.3870 },
+            main_market: { lat: 11.5880, lng: 37.3920 },
+            lake_tana: { lat: 11.6000, lng: 37.3800 },
+            blue_nile_hotel: { lat: 11.5920, lng: 37.3950 },
+            tana_hotel: { lat: 11.5910, lng: 37.3880 },
+            ghion_hotel: { lat: 11.5895, lng: 37.3860 },
+            airport: { lat: 11.6080, lng: 37.4210 },
+            felege_hiwot_hospital: { lat: 11.5870, lng: 37.3840 },
+            abay_bridge: { lat: 11.5850, lng: 37.3910 },
+            commercial_bank: { lat: 11.5875, lng: 37.3935 },
+            telecom_office: { lat: 11.5865, lng: 37.3925 },
+            poly_technic: { lat: 11.5945, lng: 37.3855 },
+            bus_station: { lat: 11.5840, lng: 37.3890 },
+            main_roundabout: { lat: 11.5890, lng: 37.3900 }
+        };
+
+        let map;
+        let directionsService;
+        let directionsRenderer;
+
+        let startMarker = null;
+        let liveEndMarker = null; // Live destination pin
+        let routeEndMarker = null; // End marker when route drawn
+
+        let userMarker = null;
+        let gpsSnapLine = null;
+
+        // Animation State Machine
+        let animState = {
+            pathArray: [],
+            currentStep: 0,
+            currentFrame: 0,
+            isAnimating: false,
+            isPaused: false,
+            frameId: null,
+            movingMarker: null,
+            stepMarkers: [],
+            totalFrames: 60, // frames per segment
+            animInfoWindow: null
+        };
+
+        const toSnakeCase = (str) => str.toLowerCase().replace(/\s+/g, '_');
+        const toTitleCase = (str) => {
+            return str.split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        };
+
+        // Haversine formula for distance between 2 coordinates in km
+        function getDistanceKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // --- MAP INITIALIZATION ---
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 11.5942, lng: 37.3900 },
+                zoom: 14,
+                mapTypeId: 'roadmap',
+                mapTypeControl: false,
+                streetViewControl: false
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true,
+                polylineOptions: {
+                    strokeColor: '#3b82f6', // blue line
+                    strokeWeight: 5,        // 5px thick
+                    strokeOpacity: 0.8
+                }
+            });
+
+            // Add base gray markers
+            addBaseMarkers();
+
+            animState.animInfoWindow = new google.maps.InfoWindow();
+        }
+
+        function addBaseMarkers() {
+            const infoWindow = new google.maps.InfoWindow();
+            for (const [node, coords] of Object.entries(NODE_COORDS)) {
+                const title = toTitleCase(node);
+                const marker = new google.maps.Marker({
+                    position: coords,
+                    map: map,
+                    title: title,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 6,
+                        fillColor: "#9ca3af",
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: "#ffffff"
+                    }
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.setContent(`<div style="font-family:Inter,sans-serif;font-weight:600;padding:4px;color:#1e3a8a;">${title}</div>`);
+                    infoWindow.open(map, marker);
+                });
+            }
+        }
+
+        // --- DRAW COMPUTED ROUTE ---
+        function drawRealRoute(pathArray) {
+            if (!pathArray || pathArray.length < 2) return;
+
+            // Ensure line is visible (might have been hidden by animation)
+            directionsRenderer.setMap(map);
+
+            const origin = NODE_COORDS[pathArray[0]];
+            const destination = NODE_COORDS[pathArray[pathArray.length - 1]];
+
+            const waypoints = [];
+            for (let i = 1; i < pathArray.length - 1; i++) {
+                waypoints.push({
+                    location: NODE_COORDS[pathArray[i]],
+                    stopover: true
+                });
+            }
+
+            const request = {
+                origin: origin,
+                destination: destination,
+                waypoints: waypoints,
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+
+                    if (startMarker) startMarker.setMap(null);
+                    if (routeEndMarker) routeEndMarker.setMap(null);
+
+                    startMarker = new google.maps.Marker({
+                        position: origin,
+                        map: map,
+                        label: { text: "Start", className: "map-label" },
+                        icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                        zIndex: 100
+                    });
+
+                    routeEndMarker = new google.maps.Marker({
+                        position: destination,
+                        map: map,
+                        label: { text: "End", className: "map-label" },
+                        icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                        zIndex: 100
+                    });
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
+        }
+
+        // --- UI & FETCH LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const findRouteBtn = document.getElementById('findRouteBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const startSelect = document.getElementById('start');
+            const goalSelect = document.getElementById('goal');
+
+            const resultsSection = document.getElementById('resultsSection');
+            const pathContainer = document.getElementById('pathContainer');
+            const costValue = document.getElementById('costValue');
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const flashMsg = document.getElementById('flashMsg');
+
+            // --- NAVIGATION LOGIC ---
+            window.switchPage = (pageId, linkElement) => {
+                // Toggle sections
+                document.querySelectorAll('.page-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+
+                // Toggle active link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                linkElement.classList.add('active');
+
+                // If switching to route finder, trigger a resize to fix map layout issues
+                if (pageId === 'routeFinderPage' && map) {
+                    google.maps.event.trigger(map, 'resize');
+                }
+            };
+
+            // --- FEATURE 3: CLEAR & RESTART ---
+            clearBtn.addEventListener('click', () => {
+                // 1. Reset dropdowns
+                startSelect.selectedIndex = 0;
+                goalSelect.selectedIndex = 0;
+
+                // 2. Clear results panel
+                resultsSection.classList.remove('active');
+                pathContainer.innerHTML = '';
+                costValue.textContent = '0';
+
+                // 3-10. Clear map and animation
+                resetAnimationState();
+
+                if (directionsRenderer) {
+                    directionsRenderer.setDirections({ routes: [] });
+                }
+
+                if (startMarker) startMarker.setMap(null);
+                if (routeEndMarker) routeEndMarker.setMap(null);
+                if (liveEndMarker) liveEndMarker.setMap(null);
+                if (userMarker) userMarker.setMap(null);
+                if (gpsSnapLine) gpsSnapLine.setMap(null);
+
+                // 11. Re-center map
+                if (map) {
+                    map.setCenter({ lat: 11.5942, lng: 37.3900 });
+                    map.setZoom(14);
+                }
+
+                // Hide location status
+                const locationStatus = document.querySelector('div[style*="locating"]');
+                if (locationStatus) locationStatus.style.display = 'none';
+
+                // 13. Flash message
+                flashMsg.style.display = 'block';
+                setTimeout(() => {
+                    flashMsg.style.display = 'none';
+                }, 2000);
+            });
+
+            // --- FEATURE 2: Live Destination Marker ---
+            goalSelect.addEventListener('change', () => {
+                const goalNode = toSnakeCase(goalSelect.value);
+                const coords = NODE_COORDS[goalNode];
+
+                if (liveEndMarker) liveEndMarker.setMap(null);
+
+                // Only place it if map is ready
+                if (typeof map !== 'undefined') {
+                    liveEndMarker = new google.maps.Marker({
+                        position: coords,
+                        map: map,
+                        label: { text: toTitleCase(goalNode), className: "map-label" },
+                        icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                        zIndex: 90
+                    });
+                }
+            });
+            // Try triggering slightly after load to ensure map is ready
+            setTimeout(() => goalSelect.dispatchEvent(new Event('change')), 1000);
+
+
+            // --- FEATURE 1: GPS Auto-Detection & Snapping ---
+            const startLabel = document.getElementById('startLabel');
+            startLabel.style.display = 'flex';
+            startLabel.style.justifyContent = 'space-between';
+            startLabel.style.alignItems = 'center';
+
+            const useLocationBtn = document.createElement('button');
+            useLocationBtn.type = 'button';
+            useLocationBtn.innerHTML = '📍 Use My Location';
+            useLocationBtn.style.cssText = 'font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--secondary); background: var(--surface); color: var(--secondary); cursor: pointer; font-family: Inter, sans-serif; font-weight: 600; transition: all 0.2s;';
+
+            useLocationBtn.onmouseover = () => useLocationBtn.style.background = '#eff6ff';
+            useLocationBtn.onmouseout = () => useLocationBtn.style.background = 'var(--surface)';
+
+            startLabel.appendChild(useLocationBtn);
+
+            const locationStatus = document.createElement('div');
+            locationStatus.style.cssText = 'font-size: 12px; color: var(--secondary); margin-top: 8px; font-weight: 500; display: none;';
+            startSelect.parentNode.insertBefore(locationStatus, startSelect.nextSibling);
+
+            useLocationBtn.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    locationStatus.textContent = '❌ Geolocation not supported.';
+                    locationStatus.style.display = 'block';
+                    locationStatus.style.color = 'var(--error-text)';
+                    return;
+                }
+
+                locationStatus.style.display = 'block';
+                locationStatus.style.color = 'var(--secondary)';
+                locationStatus.textContent = '📍 Locating...';
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        let nearestNode = null;
+                        let minDistance = Infinity;
+
+                        for (const [node, coords] of Object.entries(NODE_COORDS)) {
+                            const distance = getDistanceKm(userLat, userLng, coords.lat, coords.lng);
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                                nearestNode = node;
+                            }
+                        }
+
+                        if (nearestNode) {
+                            const titleCaseName = toTitleCase(nearestNode);
+                            Array.from(startSelect.options).forEach(opt => {
+                                if (toSnakeCase(opt.value) === nearestNode) {
+                                    startSelect.value = opt.value;
+                                }
+                            });
+                            locationStatus.textContent = `📍 Nearest location: ${titleCaseName}`;
+                        }
+
+                        if (typeof map !== 'undefined') {
+                            // Pulsing SVG for GPS Marker
+                            const pulsingSvg = `
+                            <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                              <circle cx="20" cy="20" r="6" fill="#3b82f6" />
+                              <circle cx="20" cy="20" r="6" fill="none" stroke="#3b82f6" stroke-width="2">
+                                <animate attributeName="r" from="6" to="18" dur="1.5s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" from="1" to="0" dur="1.5s" repeatCount="indefinite"/>
+                              </circle>
+                            </svg>`;
+                            const pulseIcon = {
+                                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(pulsingSvg),
+                                anchor: new google.maps.Point(20, 20),
+                                scaledSize: new google.maps.Size(40, 40)
+                            };
+
+                            if (userMarker) userMarker.setMap(null);
+                            userMarker = new google.maps.Marker({
+                                position: { lat: userLat, lng: userLng },
+                                map: map,
+                                label: { text: "You are here", className: "map-label" },
+                                icon: pulseIcon,
+                                zIndex: 101
+                            });
+
+                            // Dashed Gray Line to nearest node
+                            if (gpsSnapLine) gpsSnapLine.setMap(null);
+                            gpsSnapLine = new google.maps.Polyline({
+                                path: [{ lat: userLat, lng: userLng }, NODE_COORDS[nearestNode]],
+                                map: map,
+                                strokeOpacity: 0,
+                                icons: [{
+                                    icon: {
+                                        path: 'M 0,-1 0,1',
+                                        strokeOpacity: 1,
+                                        scale: 3,
+                                        strokeColor: "#9ca3af" // Gray
+                                    },
+                                    offset: '0',
+                                    repeat: '15px'
+                                }],
+                            });
+
+                            map.panTo({ lat: userLat, lng: userLng });
+                        }
+                    },
+                    (error) => {
+                        locationStatus.textContent = '❌ Unable to retrieve location.';
+                        locationStatus.style.color = 'var(--error-text)';
+                    }
+                );
+            });
+
+            // --- Fetch & Submit Logic ---
+            findRouteBtn.addEventListener('click', async () => {
+                const startNode = toSnakeCase(startSelect.value);
+                const goalNode = toSnakeCase(goalSelect.value);
+
+                resultsSection.classList.remove('active');
+                errorState.classList.remove('active');
+                loadingState.classList.add('active');
+                findRouteBtn.disabled = true;
+
+                // Reset Animation completely on new search
+                resetAnimationState();
+
+                try {
+                    const response = await fetch(`http://localhost:8080/route?start=${startNode}&goal=${goalNode}`);
+                    if (!response.ok) throw new Error(`Server status ${response.status}`);
+
+                    const data = await response.json();
+                    loadingState.classList.remove('active');
+
+                    if (data.error) {
+                        showError(data.error);
+                    } else if (data.path && Array.isArray(data.path)) {
+                        buildPathUI(data.path, data.cost);
+                        if (typeof drawRealRoute === 'function') {
+                            drawRealRoute(data.path);
+                        }
+                    } else {
+                        showError("Invalid response format.");
+                    }
+                } catch (error) {
+                    loadingState.classList.remove('active');
+                    showError("Cannot connect to server. Ensure SWI-Prolog is running. Error: " + error.message);
+                } finally {
+                    findRouteBtn.disabled = false;
+                }
+            });
+
+            // --- FEATURE 5: Side Panel Sync & List Construction ---
+            function buildPathUI(path, cost) {
+                pathContainer.innerHTML = '';
+                animState.pathArray = path;
+
+                path.forEach((node, index) => {
+                    const isLast = index === path.length - 1;
+                    let distanceText = "";
+                    if (!isLast) {
+                        const dist = getDistanceKm(
+                            NODE_COORDS[node].lat, NODE_COORDS[node].lng,
+                            NODE_COORDS[path[index + 1]].lat, NODE_COORDS[path[index + 1]].lng
+                        );
+                        distanceText = `${dist.toFixed(2)} km to next node`;
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = 'step-item';
+                    item.id = `step-item-${index}`;
+
+                    item.innerHTML = `
+                        <div class="step-icon" id="step-icon-${index}">○</div>
+                        <div class="step-info">
+                            <p class="step-name">${toTitleCase(node)}</p>
+                            ${distanceText ? `<p class="step-distance">${distanceText}</p>` : ''}
+                        </div>
+                    `;
+                    pathContainer.appendChild(item);
+                });
+
+                costValue.textContent = cost;
+
+                // Show fresh controls
+                document.getElementById('playBtn').style.display = 'block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'none';
+                document.getElementById('replayBtn').style.display = 'none';
+                updateProgress(0);
+
+                resultsSection.classList.add('active');
+            }
+
+            function showError(message) {
+                errorState.textContent = message;
+                errorState.classList.add('active');
+            }
+
+            // --- FEATURE 4: Step-by-Step Animated Path ---
+
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resumeBtn = document.getElementById('resumeBtn');
+            const replayBtn = document.getElementById('replayBtn');
+
+            playBtn.addEventListener('click', startAnimation);
+            replayBtn.addEventListener('click', startAnimation);
+
+            pauseBtn.addEventListener('click', () => {
+                animState.isPaused = true;
+                cancelAnimationFrame(animState.frameId);
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = 'block';
+            });
+
+            resumeBtn.addEventListener('click', () => {
+                animState.isPaused = false;
+                pauseBtn.style.display = 'block';
+                resumeBtn.style.display = 'none';
+                animateSegment(); // resume loop
+            });
+
+            function resetAnimationState() {
+                cancelAnimationFrame(animState.frameId);
+                if (animState.movingMarker) animState.movingMarker.setMap(null);
+                animState.stepMarkers.forEach(m => m.setMap(null));
+                if (animState.animInfoWindow) animState.animInfoWindow.close();
+
+                animState.currentStep = 0;
+                animState.currentFrame = 0;
+                animState.isAnimating = false;
+                animState.isPaused = false;
+                animState.movingMarker = null;
+                animState.stepMarkers = [];
+                updateProgress(0);
+
+                // Reset all list items
+                if (animState.pathArray.length > 0) {
+                    animState.pathArray.forEach((_, i) => {
+                        const el = document.getElementById(`step-item-${i}`);
+                        if (el) el.className = 'step-item';
+                        const icon = document.getElementById(`step-icon-${i}`);
+                        if (icon) icon.innerHTML = '○';
+                    });
+                }
+            }
+
+            function startAnimation() {
+                resetAnimationState();
+                animState.isAnimating = true;
+
+                // 1. Clear Directions route map
+                if (directionsRenderer) directionsRenderer.setMap(null);
+
+                // 2. Setup playback buttons
+                playBtn.style.display = 'none';
+                replayBtn.style.display = 'none';
+                pauseBtn.style.display = 'block';
+                resumeBtn.style.display = 'none';
+
+                // 3. Create Moving Car/Circle
+                const startPos = NODE_COORDS[animState.pathArray[0]];
+                animState.movingMarker = new google.maps.Marker({
+                    position: startPos,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: "#f59e0b", // vibrant amber
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: "#ffffff"
+                    },
+                    zIndex: 200
+                });
+
+                // Mark first step completed immediately
+                markStepCompleted(0);
+                dropStepPin(animState.pathArray[0], 0);
+
+                // Start loop
+                animateSegment();
+            }
+
+            function animateSegment() {
+                if (animState.isPaused) return;
+
+                const path = animState.pathArray;
+                if (animState.currentStep >= path.length - 1) {
+                    finishAnimation();
+                    return;
+                }
+
+                const startNode = path[animState.currentStep];
+                const endNode = path[animState.currentStep + 1];
+
+                const startPos = NODE_COORDS[startNode];
+                const endPos = NODE_COORDS[endNode];
+
+                animState.currentFrame++;
+                const fraction = animState.currentFrame / animState.totalFrames;
+
+                // Linear Interpolation over straight line
+                const currentLat = startPos.lat + (endPos.lat - startPos.lat) * fraction;
+                const currentLng = startPos.lng + (endPos.lng - startPos.lng) * fraction;
+
+                animState.movingMarker.setPosition({ lat: currentLat, lng: currentLng });
+
+                // Sync UI Active status on first frame of segment
+                if (animState.currentFrame === 1) {
+                    markStepActive(animState.currentStep + 1);
+                }
+
+                if (animState.currentFrame >= animState.totalFrames) {
+                    // Segment complete
+                    animState.currentFrame = 0;
+                    animState.currentStep++;
+
+                    dropStepPin(endNode, animState.currentStep);
+                    markStepCompleted(animState.currentStep);
+                    updateProgress(animState.currentStep);
+
+                    // Wait 800ms before next segment
+                    setTimeout(() => {
+                        if (!animState.isPaused && animState.isAnimating) {
+                            animState.frameId = requestAnimationFrame(animateSegment);
+                        }
+                    }, 800);
+                } else {
+                    animState.frameId = requestAnimationFrame(animateSegment);
+                }
+            }
+
+            function finishAnimation() {
+                animState.isAnimating = false;
+
+                // Final Checkered Flag
+                animState.movingMarker.setIcon({
+                    url: 'http://maps.google.com/mapfiles/ms/icons/flag.png'
+                });
+
+                const finalNodeName = toTitleCase(animState.pathArray[animState.pathArray.length - 1]);
+                animState.animInfoWindow.setContent(
+                    `<div style="font-family:Inter;font-weight:700;color:#10b981;padding:6px;font-size:14px;">
+                        Arrived at ${finalNodeName}! 🏁
+                    </div>`
+                );
+                animState.animInfoWindow.open(map, animState.movingMarker);
+
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = 'none';
+                replayBtn.style.display = 'block';
+            }
+
+            function dropStepPin(nodeName, stepIndex) {
+                const marker = new google.maps.Marker({
+                    position: NODE_COORDS[nodeName],
+                    map: map,
+                    label: { text: (stepIndex + 1).toString(), color: "white", fontWeight: "bold" },
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                    zIndex: 150
+                });
+                animState.stepMarkers.push(marker);
+
+                animState.animInfoWindow.setContent(
+                    `<div style="font-family:Inter;font-weight:600;color:#1e3a8a;padding:4px;">
+                        Step ${stepIndex + 1}: ${toTitleCase(nodeName)}
+                    </div>`
+                );
+                animState.animInfoWindow.open(map, marker);
+            }
+
+            // Sync Helpers
+            function markStepActive(index) {
+                const item = document.getElementById(`step-item-${index}`);
+                if (item) {
+                    item.classList.add('active');
+                    item.classList.remove('completed');
+                    document.getElementById(`step-icon-${index}`).innerHTML = '►';
+                    // Scroll item into view smoothly
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            function markStepCompleted(index) {
+                const item = document.getElementById(`step-item-${index}`);
+                if (item) {
+                    item.classList.remove('active');
+                    item.classList.add('completed');
+                    document.getElementById(`step-icon-${index}`).innerHTML = '✓';
+                }
+            }
+
+            function updateProgress(stepIndex) {
+                const totalSteps = animState.pathArray.length - 1;
+                if (totalSteps <= 0) return;
+                const percentage = (stepIndex / totalSteps) * 100;
+                document.getElementById('progressFill').style.width = `${percentage}%`;
+                document.getElementById('progressText').textContent = `Step ${stepIndex} of ${totalSteps}`;
+            }
+        });
+    </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWB6FLS7L5d4XvMl57nAYwZOedU8rkOIs&callback=initMap"
+        async defer></script>
+</body>
+
+</html>
