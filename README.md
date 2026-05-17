@@ -27,6 +27,7 @@ The system uses the **A\* search algorithm** to compute the shortest path betwee
 
 ---
 
+
 ## How to Run
 
 1. Start the Prolog Server
@@ -49,9 +50,10 @@ index.html
 -Click Find Route
 -View the optimal path and total cost on the map
 -Project Structure
---server.pl → SWI-Prolog backend implementing A* search
---index.html → Web interface for route selection and visualization
+-server.pl → SWI-Prolog backend implementing A* search
+-index.html → Web interface for route selection and visualization
 
+---
 
 ### Repository
 
@@ -66,3 +68,5 @@ AI search techniques (A* algorithm)
 Graph-based modeling
 Integration between SWI-Prolog backend and web frontend
 Real-world route optimization system
+
+
