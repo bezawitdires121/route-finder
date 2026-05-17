@@ -27,6 +27,20 @@ The system uses the **A\* search algorithm** to compute the shortest path betwee
 
 ---
 
+### Repository
+
+GitHub Repository:
+https://github.com/bezawitdires121/route-finder
+
+##  Purpose
+
+This project was developed to demonstrate:
+
+AI search techniques (A* algorithm)
+Graph-based modeling
+Integration between SWI-Prolog backend and web frontend
+Real-world route optimization system
+
 
 ## How to Run
 
@@ -55,18 +69,6 @@ index.html
 
 ---
 
-### Repository
 
-GitHub Repository:
-https://github.com/bezawitdires121/route-finder
-
-##  Purpose
-
-This project was developed to demonstrate:
-
-AI search techniques (A* algorithm)
-Graph-based modeling
-Integration between SWI-Prolog backend and web frontend
-Real-world route optimization system
 
 
