@@ -32,6 +32,8 @@ The system uses the **A\* search algorithm** to compute the shortest path betwee
 GitHub Repository:
 https://github.com/bezawitdires121/route-finder
 
+---
+
 ##  Purpose
 
 This project was developed to demonstrate:
@@ -41,6 +43,7 @@ This project was developed to demonstrate:
 -Integration between SWI-Prolog backend and web frontend
 -Real-world route optimization system
 
+---
 
 ## How to Run
 
