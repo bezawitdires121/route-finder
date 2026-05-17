@@ -36,10 +36,10 @@ https://github.com/bezawitdires121/route-finder
 
 This project was developed to demonstrate:
 
-AI search techniques (A* algorithm)
-Graph-based modeling
-Integration between SWI-Prolog backend and web frontend
-Real-world route optimization system
+-AI search techniques (A* algorithm)
+-Graph-based modeling
+-Integration between SWI-Prolog backend and web frontend
+-Real-world route optimization system
 
 
 ## How to Run
